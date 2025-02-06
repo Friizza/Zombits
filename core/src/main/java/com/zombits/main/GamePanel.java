@@ -3,31 +3,38 @@ package com.zombits.main;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class GamePanel extends ApplicationAdapter {
+
     private SpriteBatch batch;
-    private Texture image;
+    TiledMap map;
+    OrthogonalTiledMapRenderer renderer;
+    OrthographicCamera camera;
 
     KeyHandler keyH = new KeyHandler(this);
     Player player = new Player(this);
 
     static final int originalTileSize = 16;
-    static final int scale = 3;
+    static final int scale = 5; // 3 PER 1080P, 7 PER 4K
 
     static final int tileSize = originalTileSize * scale;
-    static final int maxScreenCol = 16;
-    static final int maxScreenRow = 12;
+    static final int maxScreenCol = 26;
+    static final int maxScreenRow = 18;
     public static final int screenWidth = tileSize * maxScreenCol;
     public static final int screenHeight = tileSize * maxScreenRow;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
-        image = new Texture("libgdx.png");
 
         // LOAD PLAYER SPRITES
         player.downStill = new Texture("player/player_still_down.png");
@@ -43,6 +50,11 @@ public class GamePanel extends ApplicationAdapter {
         player.right1 = new Texture("player/player_right1.png");
         player.right2 = new Texture("player/player_right2.png");
 
+        // LOAD MAP
+        map = new TmxMapLoader().load("Maps/world01.tmx");
+        renderer = new OrthogonalTiledMapRenderer(map, scale);
+        camera = new OrthographicCamera();
+        camera.setToOrtho(false, screenWidth, screenHeight);
     }
 
     @Override
@@ -57,7 +69,6 @@ public class GamePanel extends ApplicationAdapter {
 
         // UPDATE PLAYER SPRITE COUNTER
         player.spriteCounter++;
-
         if(keyH.downPressed || keyH.upPressed || keyH.leftPressed || keyH.rightPressed) {
             if(player.spriteCounter <= 60) {
                 player.down = player.down1;
@@ -81,20 +92,43 @@ public class GamePanel extends ApplicationAdapter {
             player.spriteCounter = 0;
         }
 
+        // UPDATE CAMERA
+        camera.position.set(player.worldX, player.worldY, 0);
+        camera.update();
+
+    }
+
+    public void resize(int width, int height) {
+        camera.viewportHeight = height;
+        camera.viewportWidth = width;
+        camera.update();
     }
 
     public void draw() {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
+
+        // DRAW MAP
+        renderer.setView(camera);
+        renderer.render();
+
+        //
+        batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        if(player.direction.equals("down")) {
-            batch.draw(player.down, player.worldX, player.worldY, tileSize, tileSize);
-        } else if(player.direction.equals("up")) {
-            batch.draw(player.up, player.worldX, player.worldY, tileSize, tileSize);
-        } else if(player.direction.equals("left")) {
-            batch.draw(player.left, player.worldX, player.worldY, tileSize, tileSize);
-        } else if(player.direction.equals("right")) {
-            batch.draw(player.right, player.worldX, player.worldY, tileSize, tileSize);
+        // DRAW PLAYER
+        switch(player.direction) {
+            case "down":
+                batch.draw(player.down, player.worldX, player.worldY, tileSize, tileSize);
+                break;
+            case "up":
+                batch.draw(player.up, player.worldX, player.worldY, tileSize, tileSize);
+                break;
+            case "left":
+                batch.draw(player.left, player.worldX, player.worldY, tileSize, tileSize);
+                break;
+            case "right":
+                batch.draw(player.right, player.worldX, player.worldY, tileSize, tileSize);
+                break;
         }
 
         batch.end();
@@ -103,6 +137,8 @@ public class GamePanel extends ApplicationAdapter {
     @Override
     public void dispose() {
         batch.dispose();
-        image.dispose();
+        player.dispose();
+        map.dispose();
+        renderer.dispose();
     }
 }
