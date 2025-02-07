@@ -14,31 +14,49 @@ public class KeyHandler extends Input.Keys {
     }
 
     public void checkInput() {
+
+        float nextX = gp.player.worldX;
+        float nextY = gp.player.worldY;
+
         if(Gdx.input.isKeyPressed(Input.Keys.W)) {
             upPressed = true;
-            gp.player.worldY++;
             gp.player.direction = "up";
+            nextY++;
+            if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
+                gp.player.worldY++;
+            }
         } else {
             upPressed = false;
         }
         if(Gdx.input.isKeyPressed(Input.Keys.S)) {
             downPressed = true;
-            gp.player.worldY--;
             gp.player.direction = "down";
+            nextY--;
+            if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
+                gp.player.worldY--;
+            }
         } else {
             downPressed = false;
         }
         if(Gdx.input.isKeyPressed(Input.Keys.A)) {
             leftPressed = true;
-            gp.player.worldX--;
+            gp.player.spriteDirection = "left";
+            nextX--;
             gp.player.direction = "left";
+            if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
+                gp.player.worldX--;
+            }
         } else {
             leftPressed = false;
         }
         if(Gdx.input.isKeyPressed(Input.Keys.D)) {
             rightPressed = true;
-            gp.player.worldX++;
+            gp.player.spriteDirection = "right";
+            nextX++;
             gp.player.direction = "right";
+            if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
+                gp.player.worldX++;
+            }
         } else {
             rightPressed = false;
         }
