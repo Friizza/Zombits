@@ -12,6 +12,8 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import java.util.ArrayList;
+
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class GamePanel extends ApplicationAdapter {
 
@@ -25,6 +27,9 @@ public class GamePanel extends ApplicationAdapter {
     MouseHandler mouseH = new MouseHandler(this);
     CollisionChecker cChecker = new CollisionChecker(this);
     Crosshair crosshair = new Crosshair(this);
+
+    public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
+    public Texture bulletTexture;
 
     static final int originalTileSize = 16;
     static final int scale = 5; // 3 PER 1080P, 7 PER 4K
@@ -55,6 +60,11 @@ public class GamePanel extends ApplicationAdapter {
         // SET INPUT PROCESSOR
         Gdx.input.setInputProcessor(mouseH);
 
+        // Load Textures
+        loadTextures();
+    }
+
+    public void loadTextures() {
         // LOAD PLAYER SPRITES
         player.rightStill1 = new Texture("player/player_right_still_1.png");
         player.rightStill2 = new Texture("player/player_right_still_2.png");
@@ -71,8 +81,9 @@ public class GamePanel extends ApplicationAdapter {
         player.left3 = new Texture("player/player_left_3.png");
         player.left4 = new Texture("player/player_left_4.png");
 
-        // LOAD CROSSHAIR TEXTURE
+        // LOAD CROSSHAIR & BULLET TEXTURE
         crosshair.image = new Texture("crosshair.png");
+        bulletTexture = new Texture("bullet.png");
 
     }
 
@@ -91,6 +102,7 @@ public class GamePanel extends ApplicationAdapter {
         if(gameState == playState) {
             updateCrosshair();
             updatePlayerSprite();
+            updateBullets();
 
             // UPDATE CAMERA
             camera.position.set(player.worldX, player.worldY, 0);
@@ -164,6 +176,17 @@ public class GamePanel extends ApplicationAdapter {
         crosshair.x = (int)(player.worldX + (dirX / length) * circleRadius);
         crosshair.y = (int)(player.worldY + (dirY / length) * circleRadius);
     }
+    public void updateBullets() {
+        for(int i = 0; i < bullets.size(); i++) {
+            Bullet bullet = bullets.get(i);
+            bullet.update();
+
+            if (isOutOfBounds(bullet) || checkBulletCollision(bullet)) {
+                bullets.remove(i);
+//                bullet.dispose();
+            }
+        }
+    }
 
     public void resize(int width, int height) {
         if(gameState == playState) {
@@ -186,7 +209,7 @@ public class GamePanel extends ApplicationAdapter {
             );
             renderer.render();
 
-            //
+
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
 
@@ -200,10 +223,26 @@ public class GamePanel extends ApplicationAdapter {
                     break;
             }
 
-            // DRAW CROSSHAIR
+            // Draw Crosshair
             batch.draw(crosshair.image, crosshair.x, crosshair.y, originalTileSize * 3, originalTileSize * 3);
+            // Draw Bullets
+            for (Bullet bullet : bullets) {
+                batch.draw(bullet.texture, bullet.x, bullet.y, tileSize/2, tileSize/2);
+            }
 
             batch.end();
+        }
+        else if (gameState == inventoryState) {
+            // Draw Inventory
+        }
+        else if (gameState == pauseState) {
+            // Draw Pause Menu
+        }
+        else if (gameState == menuState) {
+            // Draw Menu
+        }
+        else if (gameState == gameOverState) {
+            // Draw Game Over Screen
         }
     }
 
@@ -215,5 +254,27 @@ public class GamePanel extends ApplicationAdapter {
 
         player.dispose();
         crosshair.dispose();
+
+        for (Bullet bullet : bullets) {
+            bullet.dispose();
+        }
+        bulletTexture.dispose();
+    }
+
+    //// HELPER METHODS ////
+
+    // Bullets
+    public void createBullet(float startX, float startY, float targetX, float targetY) {
+        Bullet bullet = new Bullet(this, startX, startY, targetX, targetY);
+        bullet.texture = bulletTexture;
+        bullets.add(bullet);
+    }
+    private boolean isOutOfBounds(Bullet bullet) {
+        return bullet.x < 0 || bullet.x > map.getProperties().get("width", Integer.class) * tileSize ||
+            bullet.y < 0 || bullet.y > map.getProperties().get("height", Integer.class) * tileSize;
+    }
+    private boolean checkBulletCollision(Bullet bullet) {
+        // Implement bullet collision with tiles or entities
+        return cChecker.checkTileCollision(bullet.x, bullet.y);
     }
 }
