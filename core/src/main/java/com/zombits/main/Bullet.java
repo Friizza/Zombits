@@ -12,6 +12,8 @@ public class Bullet {
     public Texture texture;
 
     public Bullet(GamePanel gp, float startX, float startY, float targetX, float targetY) {
+        this.gp = gp;
+
         x = startX;
         y = startY;
 
@@ -34,5 +36,9 @@ public class Bullet {
         if (texture != null) {
             texture.dispose();
         }
+    }
+
+    public void damageZombie() {
+
     }
 }

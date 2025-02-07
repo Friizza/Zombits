@@ -30,6 +30,8 @@ public class MouseHandler extends InputAdapter {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT && gp.gameState == gp.playState) {
+            gp.gameSound.playSE(gp.gameSound.shoot);
+
             // Calculate mouse world position
             float mouseWorldX = gp.camera.position.x - gp.screenWidth/2 +
                 screenX * (float)gp.screenWidth / Gdx.graphics.getWidth();

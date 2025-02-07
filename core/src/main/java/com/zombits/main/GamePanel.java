@@ -27,6 +27,8 @@ public class GamePanel extends ApplicationAdapter {
     MouseHandler mouseH = new MouseHandler(this);
     CollisionChecker cChecker = new CollisionChecker(this);
     Crosshair crosshair = new Crosshair(this);
+    UI ui = new UI(this, batch);
+    GameSound gameSound;
 
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
     public Texture bulletTexture;
@@ -40,7 +42,7 @@ public class GamePanel extends ApplicationAdapter {
     public static final int screenWidth = tileSize * maxScreenCol;
     public static final int screenHeight = tileSize * maxScreenRow;
 
-    public int gameState = 1;
+    public int gameState = 0;
     public final int menuState = 0;
     public final int playState = 1;
     public final int inventoryState = 2;
@@ -50,6 +52,9 @@ public class GamePanel extends ApplicationAdapter {
     @Override
     public void create() {
         batch = new SpriteBatch();
+
+        // Initialize GameSound
+        gameSound = new GameSound(this);
 
         // LOAD MAP
         map = new TmxMapLoader().load("Maps/world01.tmx");
@@ -65,6 +70,9 @@ public class GamePanel extends ApplicationAdapter {
     }
 
     public void loadTextures() {
+        // LOAD LOGO
+        ui.logo = new Texture("logo.png");
+
         // LOAD PLAYER SPRITES
         player.rightStill1 = new Texture("player/player_right_still_1.png");
         player.rightStill2 = new Texture("player/player_right_still_2.png");
@@ -183,7 +191,6 @@ public class GamePanel extends ApplicationAdapter {
 
             if (isOutOfBounds(bullet) || checkBulletCollision(bullet)) {
                 bullets.remove(i);
-//                bullet.dispose();
             }
         }
     }
@@ -239,7 +246,12 @@ public class GamePanel extends ApplicationAdapter {
             // Draw Pause Menu
         }
         else if (gameState == menuState) {
-            // Draw Menu
+            batch.begin();
+
+            // Draw Logo
+            batch.draw(ui.logo, screenWidth/2 -  1050, screenHeight - tileSize*13, 300*7, 166*7); // DA CAMBIARE IN VALORI DINAMICI
+
+            batch.end();
         }
         else if (gameState == gameOverState) {
             // Draw Game Over Screen
@@ -253,12 +265,14 @@ public class GamePanel extends ApplicationAdapter {
         renderer.dispose();
 
         player.dispose();
+        ui.dispose();
         crosshair.dispose();
-
         for (Bullet bullet : bullets) {
             bullet.dispose();
         }
         bulletTexture.dispose();
+
+        gameSound.dispose();
     }
 
     //// HELPER METHODS ////
