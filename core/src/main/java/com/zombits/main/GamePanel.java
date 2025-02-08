@@ -11,34 +11,40 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.zombits.main.zombie.Zombie;
+import com.zombits.main.zombie.ZombieSpawner;
 
+import java.awt.*;
 import java.util.ArrayList;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class GamePanel extends ApplicationAdapter {
 
     private SpriteBatch batch;
-    TiledMap map;
+    public TiledMap map;
     OrthogonalTiledMapRenderer renderer;
     OrthographicCamera camera;
 
-    Player player = new Player(this);
+    public Player player = new Player(this);
     KeyHandler keyH = new KeyHandler(this);
     MouseHandler mouseH = new MouseHandler(this);
-    CollisionChecker cChecker = new CollisionChecker(this);
+    public CollisionChecker cChecker = new CollisionChecker(this);
     Crosshair crosshair = new Crosshair(this);
     UI ui = new UI(this, batch);
     GameSound gameSound;
+    ZombieSpawner zombieSpawner;
 
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
     public Texture bulletTexture;
 
-    static final int originalTileSize = 16;
-    static final int scale = 5; // 3 PER 1080P, 7 PER 4K
+    public ArrayList<Zombie> zombies = new ArrayList<>();
 
-    static final int tileSize = originalTileSize * scale;
-    static final int maxScreenCol = 26;
-    static final int maxScreenRow = 18;
+    static final int originalTileSize = 16;
+    static final int scale = 5;
+
+    public static final int tileSize = originalTileSize * scale;
+    static final int maxScreenCol = 24;
+    static final int maxScreenRow = 14;
     public static final int screenWidth = tileSize * maxScreenCol;
     public static final int screenHeight = tileSize * maxScreenRow;
 
@@ -48,6 +54,8 @@ public class GamePanel extends ApplicationAdapter {
     public final int inventoryState = 2;
     public final int pauseState = 3;
     public final int gameOverState = 4;
+
+    public int score = 0;
 
     @Override
     public void create() {
@@ -61,6 +69,12 @@ public class GamePanel extends ApplicationAdapter {
         renderer = new OrthogonalTiledMapRenderer(map, scale);
         camera = new OrthographicCamera();
         camera.setToOrtho(false, screenWidth, screenHeight);
+
+        // Set up zombie spawner
+        zombieSpawner = new ZombieSpawner(this);
+        zombieSpawner.setSpawnInterval(2000);  // Spawn every 2 seconds
+        zombieSpawner.setSpawnRadius(10);      // Spawn 10 tiles away from player
+        zombieSpawner.setMaxZombies(30);       // Allow up to 30 zombies
 
         // SET INPUT PROCESSOR
         Gdx.input.setInputProcessor(mouseH);
@@ -110,6 +124,7 @@ public class GamePanel extends ApplicationAdapter {
         if(gameState == playState) {
             updateCrosshair();
             updatePlayerSprite();
+            updateZombies();
             updateBullets();
 
             // UPDATE CAMERA
@@ -194,6 +209,19 @@ public class GamePanel extends ApplicationAdapter {
             }
         }
     }
+    public void updateZombies() {
+        zombieSpawner.update();
+        for (Zombie zombie : zombies) {
+            zombie.update();
+        }
+
+        for (int i = zombies.size() - 1; i >= 0; i--) {
+            if (!zombies.get(i).isAlive) {
+                Zombie zombie = zombies.remove(i);
+                zombie.dispose();
+            }
+        }
+    }
 
     public void resize(int width, int height) {
         if(gameState == playState) {
@@ -220,7 +248,29 @@ public class GamePanel extends ApplicationAdapter {
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
 
-            // DRAW PLAYER
+            // Draw Bullets Accounting for rotation
+            for (Bullet bullet : bullets) {
+                batch.draw(
+                    bullet.texture,           // texture
+                    bullet.x,                 // x position
+                    bullet.y,                 // y position
+                    tileSize/4,              // origin x (half of width)
+                    tileSize/4,              // origin y (half of height)
+                    tileSize/2,              // width
+                    tileSize/2,              // height
+                    1,                       // scale x
+                    1,                       // scale y
+                    bullet.rotation,         // rotation (degrees)
+                    0,                       // src x
+                    0,                       // src y
+                    bullet.texture.getWidth(),  // src width
+                    bullet.texture.getHeight(), // src height
+                    false,                   // flip x
+                    false                    // flip y
+                );
+            }
+
+            // Draw Player
             switch(player.spriteDirection) {
                 case "left":
                     batch.draw(player.left, player.worldX, player.worldY, tileSize, tileSize);
@@ -230,12 +280,19 @@ public class GamePanel extends ApplicationAdapter {
                     break;
             }
 
+            // Draw Zombies
+            for (Zombie zombie : zombies) {
+                if (zombie.isAlive) {
+                    if (zombie.direction.equals("left")) {
+                        batch.draw(zombie.left, zombie.worldX, zombie.worldY, tileSize, tileSize);
+                    } else {
+                        batch.draw(zombie.right, zombie.worldX, zombie.worldY, tileSize, tileSize);
+                    }
+                }
+            }
+
             // Draw Crosshair
             batch.draw(crosshair.image, crosshair.x, crosshair.y, originalTileSize * 3, originalTileSize * 3);
-            // Draw Bullets
-            for (Bullet bullet : bullets) {
-                batch.draw(bullet.texture, bullet.x, bullet.y, tileSize/2, tileSize/2);
-            }
 
             batch.end();
         }
@@ -270,6 +327,9 @@ public class GamePanel extends ApplicationAdapter {
         for (Bullet bullet : bullets) {
             bullet.dispose();
         }
+        for (Zombie zombie : zombies) {
+            zombie.dispose();
+        }
         bulletTexture.dispose();
 
         gameSound.dispose();
@@ -288,7 +348,29 @@ public class GamePanel extends ApplicationAdapter {
             bullet.y < 0 || bullet.y > map.getProperties().get("height", Integer.class) * tileSize;
     }
     private boolean checkBulletCollision(Bullet bullet) {
-        // Implement bullet collision with tiles or entities
-        return cChecker.checkTileCollision(bullet.x, bullet.y);
+        // Check tile collision first
+        if (cChecker.checkTileCollision(bullet.x, bullet.y)) {
+            return true;
+        }
+
+        // Check zombie collisions
+        Rectangle bulletRect = new Rectangle((int)bullet.x, (int)bullet.y, tileSize/2, tileSize/2);
+        for (Zombie zombie : zombies) {
+            if (zombie.isAlive) {
+                Rectangle zombieRect = new Rectangle(
+                    (int)(zombie.worldX + zombie.solidArea.x),
+                    (int)(zombie.worldY + zombie.solidArea.y),
+                    zombie.solidArea.width,
+                    zombie.solidArea.height
+                );
+
+                if (bulletRect.intersects(zombieRect)) {
+                    zombie.takeDamage(25);  // Adjust damage as needed
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
