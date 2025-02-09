@@ -29,10 +29,16 @@ public class GamePanel extends ApplicationAdapter {
     public TiledMap map;
     OrthogonalTiledMapRenderer renderer;
     OrthographicCamera camera;
+    OrthographicCamera uiCamera;
 
-    FreeTypeFontGenerator generator;
-    FreeTypeFontGenerator.FreeTypeFontParameter parameter;
-    public BitmapFont font;
+    // Menu Font
+    FreeTypeFontGenerator menuGenerator;
+    FreeTypeFontGenerator.FreeTypeFontParameter menuParameter;
+    public BitmapFont menuFont;
+    // UI Font
+    FreeTypeFontGenerator uiGenerator;
+    FreeTypeFontGenerator.FreeTypeFontParameter uiParameter;
+    public BitmapFont uiFont;
 
     Random random = new Random();
     public Player player = new Player(this);
@@ -76,19 +82,26 @@ public class GamePanel extends ApplicationAdapter {
         gameSound = new GameSound(this);
 
         // Initialize font
-        generator = new FreeTypeFontGenerator(Gdx.files.internal("ByteBounce.ttf"));
-        parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 130;
-        font = generator.generateFont(parameter);
+        menuGenerator = new FreeTypeFontGenerator(Gdx.files.internal("ByteBounce.ttf"));
+        menuParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        menuParameter.size = 130;
+        menuFont = menuGenerator.generateFont(menuParameter);
+
+        uiGenerator = new FreeTypeFontGenerator(Gdx.files.internal("monogram.ttf"));
+        uiParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        uiParameter.size = 50;
+        uiFont = uiGenerator.generateFont(uiParameter);
 
         // Initialize CoordinateUtility
-        coorUtil = new CoordinateUtility(font);
+        coorUtil = new CoordinateUtility(menuFont, uiFont);
 
-        // Load map
+        // Initialize Map and Camera
         map = new TmxMapLoader().load("Maps/world01.tmx");
         renderer = new OrthogonalTiledMapRenderer(map, scale);
         camera = new OrthographicCamera();
         camera.setToOrtho(false, screenWidth, screenHeight);
+        uiCamera = new OrthographicCamera();
+        uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // Set up zombie spawner
         zombieSpawner = new ZombieSpawner(this);
@@ -253,6 +266,11 @@ public class GamePanel extends ApplicationAdapter {
             camera.viewportHeight = height;
             camera.viewportWidth = width;
             camera.update();
+
+            uiCamera.viewportWidth = width;
+            uiCamera.viewportHeight = height;
+            uiCamera.position.set(width/2, height/2, 0);
+            uiCamera.update();
         }
     }
 
@@ -260,7 +278,8 @@ public class GamePanel extends ApplicationAdapter {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
 
         if(gameState == playState) {
-            // DRAW MAP
+            /// DRAW GAME ///
+            // Map
             renderer.setView(camera.combined,
                 camera.position.x - screenWidth/2 - tileSize * 5,
                 camera.position.y - screenHeight/2 - tileSize * 5,
@@ -320,6 +339,13 @@ public class GamePanel extends ApplicationAdapter {
             batch.draw(crosshair.image, crosshair.x, crosshair.y, originalTileSize * 3, originalTileSize * 3);
 
             batch.end();
+
+            /// DRAW UI ///
+            batch.setProjectionMatrix(uiCamera.combined);
+            batch.begin();
+            String scoreString = "Score: " + this.score;
+            uiFont.draw(batch, scoreString, 20, Gdx.graphics.getHeight() - 20);
+            batch.end();
         }
         else if (gameState == inventoryState) {
             // Draw Inventory
@@ -337,7 +363,7 @@ public class GamePanel extends ApplicationAdapter {
                 coorUtil.getCenteredImageY(166*4) + coorUtil.getCenteredImageY(166*4) / 2, 300*4, 166*4);
 
             // Draw Press Enter to Start
-            font.draw(batch, pressEnter, coorUtil.getCenteredTextX(pressEnter), coorUtil.getCenteredTextY(pressEnter) - coorUtil.getCenteredTextY(pressEnter) / 2);
+            menuFont.draw(batch, pressEnter, coorUtil.getCenteredMenuTextX(pressEnter), coorUtil.getCenteredMenuTextY(pressEnter) - coorUtil.getCenteredMenuTextY(pressEnter) / 2);
 
             batch.end();
         }
@@ -364,7 +390,8 @@ public class GamePanel extends ApplicationAdapter {
         bulletTexture.dispose();
 
         gameSound.dispose();
-        generator.dispose();
+        menuGenerator.dispose();
+        uiGenerator.dispose();
     }
 
     //// HELPER METHODS ////
