@@ -2,10 +2,13 @@ package com.zombits.main;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -14,8 +17,10 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.zombits.main.zombie.Zombie;
 import com.zombits.main.zombie.ZombieSpawner;
 
+import javax.script.ScriptEngine;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Random;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class GamePanel extends ApplicationAdapter {
@@ -25,6 +30,11 @@ public class GamePanel extends ApplicationAdapter {
     OrthogonalTiledMapRenderer renderer;
     OrthographicCamera camera;
 
+    FreeTypeFontGenerator generator;
+    FreeTypeFontGenerator.FreeTypeFontParameter parameter;
+    public BitmapFont font;
+
+    Random random = new Random();
     public Player player = new Player(this);
     KeyHandler keyH = new KeyHandler(this);
     MouseHandler mouseH = new MouseHandler(this);
@@ -33,6 +43,7 @@ public class GamePanel extends ApplicationAdapter {
     UI ui = new UI(this, batch);
     GameSound gameSound;
     ZombieSpawner zombieSpawner;
+    CoordinateUtility coorUtil;
 
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
     public Texture bulletTexture;
@@ -64,7 +75,16 @@ public class GamePanel extends ApplicationAdapter {
         // Initialize GameSound
         gameSound = new GameSound(this);
 
-        // LOAD MAP
+        // Initialize font
+        generator = new FreeTypeFontGenerator(Gdx.files.internal("ByteBounce.ttf"));
+        parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 130;
+        font = generator.generateFont(parameter);
+
+        // Initialize CoordinateUtility
+        coorUtil = new CoordinateUtility(font);
+
+        // Load map
         map = new TmxMapLoader().load("Maps/world01.tmx");
         renderer = new OrthogonalTiledMapRenderer(map, scale);
         camera = new OrthographicCamera();
@@ -219,6 +239,11 @@ public class GamePanel extends ApplicationAdapter {
             if (!zombies.get(i).isAlive) {
                 Zombie zombie = zombies.remove(i);
                 zombie.dispose();
+            } else {
+                int playSound = random.nextInt(700);
+                if(playSound == 0) {
+                    gameSound.playSE(gameSound.zombieGroan);
+                }
             }
         }
     }
@@ -305,8 +330,14 @@ public class GamePanel extends ApplicationAdapter {
         else if (gameState == menuState) {
             batch.begin();
 
+            String pressEnter = "Press Enter to Start";
+
             // Draw Logo
-            batch.draw(ui.logo, screenWidth/2 -  1050, screenHeight - tileSize*13, 300*7, 166*7); // DA CAMBIARE IN VALORI DINAMICI
+            batch.draw(ui.logo, coorUtil.getCenteredImageX(300*4),
+                coorUtil.getCenteredImageY(166*4) + coorUtil.getCenteredImageY(166*4) / 2, 300*4, 166*4);
+
+            // Draw Press Enter to Start
+            font.draw(batch, pressEnter, coorUtil.getCenteredTextX(pressEnter), coorUtil.getCenteredTextY(pressEnter) - coorUtil.getCenteredTextY(pressEnter) / 2);
 
             batch.end();
         }
@@ -333,6 +364,7 @@ public class GamePanel extends ApplicationAdapter {
         bulletTexture.dispose();
 
         gameSound.dispose();
+        generator.dispose();
     }
 
     //// HELPER METHODS ////
@@ -365,7 +397,7 @@ public class GamePanel extends ApplicationAdapter {
                 );
 
                 if (bulletRect.intersects(zombieRect)) {
-                    zombie.takeDamage(25);  // Adjust damage as needed
+                    zombie.takeDamage(25); //// CHANGE?
                     return true;
                 }
             }

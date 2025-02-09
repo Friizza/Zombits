@@ -25,10 +25,10 @@ public class KeyHandler extends Input.Keys {
             if(Gdx.input.isKeyPressed(Input.Keys.W)) {
                 upPressed = true;
                 gp.player.direction = "up";
-                nextY++;
+                nextY += gp.player.speed;
                 playWalkSound();
                 if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
-                    gp.player.worldY++;
+                    gp.player.worldY += gp.player.speed;
                 }
             } else {
                 upPressed = false;
@@ -36,10 +36,10 @@ public class KeyHandler extends Input.Keys {
             if(Gdx.input.isKeyPressed(Input.Keys.S)) {
                 downPressed = true;
                 gp.player.direction = "down";
-                nextY--;
+                nextY -= gp.player.speed;
                 playWalkSound();
                 if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
-                    gp.player.worldY--;
+                    gp.player.worldY -= gp.player.speed;
                 }
             } else {
                 downPressed = false;
@@ -47,11 +47,11 @@ public class KeyHandler extends Input.Keys {
             if(Gdx.input.isKeyPressed(Input.Keys.A)) {
                 leftPressed = true;
                 gp.player.spriteDirection = "left";
-                nextX--;
+                nextX -= gp.player.speed;
                 playWalkSound();
                 gp.player.direction = "left";
                 if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
-                    gp.player.worldX--;
+                    gp.player.worldX -= gp.player.speed;
                 }
             } else {
                 leftPressed = false;
@@ -59,11 +59,11 @@ public class KeyHandler extends Input.Keys {
             if(Gdx.input.isKeyPressed(Input.Keys.D)) {
                 rightPressed = true;
                 gp.player.spriteDirection = "right";
-                nextX++;
+                nextX += gp.player.speed;
                 playWalkSound();
                 gp.player.direction = "right";
                 if(!gp.cChecker.checkTileCollision(nextX, nextY)) {
-                    gp.player.worldX++;
+                    gp.player.worldX += gp.player.speed;
                 }
             } else {
                 rightPressed = false;

@@ -8,6 +8,10 @@ public class Player {
 
     GamePanel gp;
 
+    public int maxHealth = 100;
+    public int health = maxHealth;
+    public int speed = 1;
+
     public Texture left, right;
     public Texture left1, left2, left3, left4, right1, right2, right3, right4;
     public Texture leftStill1, leftStill2, leftStill3, rightStill1, rightStill2, rightStill3;

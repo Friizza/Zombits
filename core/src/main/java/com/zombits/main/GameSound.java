@@ -10,6 +10,7 @@ public class GameSound {
 
     Sound walk = Gdx.audio.newSound(Gdx.files.internal("Sound/walking.wav"));
     Sound shoot = Gdx.audio.newSound(Gdx.files.internal("Sound/shoot.wav"));
+    Sound zombieGroan = Gdx.audio.newSound(Gdx.files.internal("Sound/zombie_groan.wav"));
 //    Music music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
 
     public GameSound(GamePanel gp) {
