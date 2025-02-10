@@ -48,7 +48,7 @@ public class GamePanel extends ApplicationAdapter {
     Crosshair crosshair = new Crosshair(this);
     UI ui = new UI(this);
     public GameSound gameSound;
-    ZombieSpawner zombieSpawner;
+    public ZombieSpawner zombieSpawner;
     CoordinateUtility coorUtil;
 
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
@@ -117,10 +117,10 @@ public class GamePanel extends ApplicationAdapter {
     }
 
     public void loadTextures() {
-        // LOAD LOGO
+        // Load logo
         ui.logo = new Texture("logo.png");
 
-        // LOAD PLAYER SPRITES
+        // Load player sprites
         player.rightStill1 = new Texture("player/player_right_still_1.png");
         player.rightStill2 = new Texture("player/player_right_still_2.png");
         player.rightStill3 = new Texture("player/player_right_still_3.png");
@@ -136,9 +136,13 @@ public class GamePanel extends ApplicationAdapter {
         player.left3 = new Texture("player/player_left_3.png");
         player.left4 = new Texture("player/player_left_4.png");
 
-        // LOAD CROSSHAIR & BULLET TEXTURE
+        // Load Crosshair and Bullet texture
         crosshair.image = new Texture("crosshair.png");
         bulletTexture = new Texture("bullet.png");
+
+        // Load gun textures
+        player.gunPistol = new Texture("Gun/pistol.png");
+        player.gunRifle = new Texture("Gun/rifle.png");
 
     }
 
@@ -318,6 +322,9 @@ public class GamePanel extends ApplicationAdapter {
             }
 
             // Player
+            if(player.isDamaged) {
+                batch.setColor(1, 0, 0, 1);
+            }
             switch(player.spriteDirection) {
                 case "left":
                     batch.draw(player.left, player.worldX, player.worldY, tileSize, tileSize);
@@ -326,6 +333,34 @@ public class GamePanel extends ApplicationAdapter {
                     batch.draw(player.right, player.worldX, player.worldY, tileSize, tileSize);
                     break;
             }
+            batch.setColor(1, 1, 1, 1);
+
+            // Gun
+            float gunAngle = (float)Math.toDegrees(Math.atan2(
+                crosshair.y - player.worldY,
+                crosshair.x - player.worldX
+            ));
+
+            boolean flipTexture = crosshair.x < player.worldX; // Flip texture if the gun is pointing left
+
+            batch.draw(
+                player.currentGun == player.pistol ? player.gunPistol : player.gunRifle,
+                player.worldX + tileSize/4,
+                player.worldY - tileSize/4,
+                tileSize/2,
+                tileSize/2,
+                tileSize,
+                tileSize,
+                1,
+                1,
+                gunAngle,
+                0,
+                0,
+                player.currentGun == player.pistol ? player.gunPistol.getWidth() : player.gunRifle.getWidth(),
+                player.currentGun == player.pistol ? player.gunPistol.getHeight() : player.gunRifle.getHeight(),
+                false,
+                flipTexture
+            );
 
             // Zombies
             for (Zombie zombie : zombies) {
@@ -350,6 +385,9 @@ public class GamePanel extends ApplicationAdapter {
             // Score
             String scoreString = "Score: " + this.score;
             uiFont.draw(batch, scoreString, 20, Gdx.graphics.getHeight() - 20);
+            // Difficulty Level
+            String diffLevel = "Difficulty: " + zombieSpawner.difficultyLevel;
+            uiFont.draw(batch, diffLevel, 20, Gdx.graphics.getHeight() - 60);
 
             batch.end();
         }
@@ -409,7 +447,7 @@ public class GamePanel extends ApplicationAdapter {
 
     // Bullets
     public void createBullet(float startX, float startY, float targetX, float targetY) {
-        Bullet bullet = new Bullet(this, startX, startY, targetX, targetY);
+        Bullet bullet = new Bullet(this, startX + tileSize/2, startY, targetX, targetY);
         bullet.texture = bulletTexture;
         bullets.add(bullet);
     }

@@ -12,7 +12,8 @@ public class Zombie {
     Random random = new Random();
 
     public float worldX, worldY;
-    public float speed = 1f;
+    public final float defaultSpeed = 1f;
+    public float speed = defaultSpeed;
     public Rectangle solidArea;
 
     // Animation properties
@@ -24,11 +25,17 @@ public class Zombie {
     public int spriteNum = 1;
 
     // Status
-    public int maxHealth = 100;
+    public final int defaultMaxHealth = 100;
+    public int maxHealth = defaultMaxHealth;
     public int currentHealth = maxHealth;
     public boolean isAlive = true;
-
     public int attack = 1;
+
+    // Knockback stats
+    private float knockbackX = 0;
+    private float knockbackY = 0;
+    private float knockbackDecay = 0.9f;
+    private float minKnockbackThreshold = 0.1f;
 
     public Zombie(GamePanel gp, float x, float y) {
         this.gp = gp;
@@ -65,36 +72,68 @@ public class Zombie {
             gp.gameSound.playSE(gp.gameSound.zombieGroan);
         }
 
-        // Calculate direction to player
-        float dx = gp.player.worldX - worldX;
-        float dy = gp.player.worldY - worldY;
-        float length = (float)Math.sqrt(dx * dx + dy * dy);
-
-        // Normalize direction and apply speed
-        if (length > 0) {
-            float moveX = (dx / length) * speed;
-            float moveY = (dy / length) * speed;
-
-            // Update direction for sprite selection
-            if (moveX < 0) {
-                direction = "left";
-            } else {
-                direction = "right";
+        if (Math.abs(knockbackX) > minKnockbackThreshold || Math.abs(knockbackY) > minKnockbackThreshold) {
+            // Check collisions during knockback
+            if (!gp.cChecker.checkTileCollision(worldX + knockbackX, worldY)) {
+                worldX += knockbackX;
+            }
+            if (!gp.cChecker.checkTileCollision(worldX, worldY + knockbackY)) {
+                worldY += knockbackY;
             }
 
-            // Check player collision
-            if(!checkPlayerCollision()) {
-                // Check collisions before moving
-                if (!gp.cChecker.checkTileCollision(worldX + moveX, worldY)) {
-                    worldX += moveX;
+            // Decay knockback
+            knockbackX *= knockbackDecay;
+            knockbackY *= knockbackDecay;
+
+            // Stop knockback if too small
+            if (Math.abs(knockbackX) < minKnockbackThreshold) knockbackX = 0;
+            if (Math.abs(knockbackY) < minKnockbackThreshold) knockbackY = 0;
+        } else {
+            // Calculate direction to player
+            float dx = gp.player.worldX - worldX;
+            float dy = gp.player.worldY - worldY;
+            float length = (float)Math.sqrt(dx * dx + dy * dy);
+
+            // Normalize direction and apply speed
+            if (length > 0) {
+                float moveX = (dx / length) * speed;
+                float moveY = (dy / length) * speed;
+
+                // Update direction for sprite selection
+                if (moveX < 0) {
+                    direction = "left";
+                } else {
+                    direction = "right";
                 }
-                if (!gp.cChecker.checkTileCollision(worldX, worldY + moveY)) {
-                    worldY += moveY;
+
+                // Check player collision
+                if(!checkPlayerCollision()) {
+                    // Check collisions before moving
+                    if (!gp.cChecker.checkTileCollision(worldX + moveX, worldY)) {
+                        worldX += moveX;
+                    }
+                    if (!gp.cChecker.checkTileCollision(worldX, worldY + moveY)) {
+                        worldY += moveY;
+                    }
+                } else {
+                    float knockbackStrength = 25f;
+                    float dx2 = worldX - gp.player.worldX;  // Reverse the subtraction order
+                    float dy2 = worldY - gp.player.worldY;  // Reverse the subtraction order
+                    float length2 = (float)Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+                    if (length2 > 0) {
+                        knockbackX = (dx2 / length2) * knockbackStrength;
+                        knockbackY = (dy2 / length2) * knockbackStrength;
+                    }
+
+                    gp.player.takeDamage(attack);
                 }
-            } else {
-                gp.player.takeDamage(attack);
             }
         }
+
+        // Update zombies stats based on difficulty level
+        maxHealth = defaultMaxHealth + (gp.zombieSpawner.difficultyLevel * 20);
+        speed = defaultSpeed + (gp.zombieSpawner.difficultyLevel * 0.1f);
 
         // Update animation
         updateAnimation();
@@ -153,6 +192,10 @@ public class Zombie {
 
     public void damagePlayer() {
         gp.player.health -= attack;
+    }
+
+    public void setMaxHealth() {
+        this.maxHealth += 10;
     }
 
     public void dispose() {

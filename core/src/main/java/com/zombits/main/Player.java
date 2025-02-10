@@ -20,10 +20,14 @@ public class Player {
     public Texture leftStill1, leftStill2, leftStill3, rightStill1, rightStill2, rightStill3;
     public String spriteDirection = "right";
     public String direction = "down";
+    public boolean isDamaged = false;
 
     public Gun currentGun;
     public Gun pistol;
     public Gun rifle;
+
+    public Texture gunPistol;
+    public Texture gunRifle;
 
     public int spriteCounter = 0;
     public int worldX = 14 * GamePanel.tileSize;
@@ -41,14 +45,18 @@ public class Player {
         solidArea.height = 27;
 
         // Initialize guns
-        rifle = new Gun("Rifle", 25, 0.1f, true);  // 0.1s between shots (automatic)
-        pistol = new Gun("Pistol", 40, 0.5f, false); // 0.5s between shots (semi-automatic)
+        rifle = new Gun("Rifle", 30, 0.1f, true);  // 0.1s between shots (automatic)
+        pistol = new Gun("Pistol", 25, 0.5f, false); // 0.5s between shots (semi-automatic)
         currentGun = pistol;
     }
 
     public void update(float deltaTime) {
         timeSinceLastDamage += deltaTime;
         currentGun.lastShotTime += deltaTime;
+
+        if (isDamaged && timeSinceLastDamage >= damageCooldown) {
+            isDamaged = false;
+        }
 
         if(gp.mouseH.isShooting && currentGun.lastShotTime >= currentGun.fireRate) {
             gp.shoot(worldX, worldY, gp.mouseH.mouseX, gp.mouseH.mouseY);
@@ -66,6 +74,8 @@ public class Player {
 
     public void takeDamage(int damage) {
         if(canTakeDamage()) {
+            gp.gameSound.playSE(gp.gameSound.receiveDamage);
+            isDamaged = true;
             health -= damage;
             timeSinceLastDamage = 0;
         }
@@ -86,5 +96,8 @@ public class Player {
         rightStill1.dispose();
         rightStill2.dispose();
         rightStill3.dispose();
+
+        gunPistol.dispose();
+        gunRifle.dispose();
     }
 }

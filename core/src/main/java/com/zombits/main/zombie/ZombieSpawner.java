@@ -7,12 +7,12 @@ import com.zombits.main.GamePanel;
 public class ZombieSpawner {
     private GamePanel gp;
     private long lastSpawnTime;
-    private long spawnInterval = 3000; // 3 seconds between spawns
+    private long spawnInterval = 1500; // 1.5 seconds between spawns
     private float spawnRadius = 15f; // In tiles
-    private int maxZombies = 20;
+    private int maxZombies = 30;
 
     private long gameStartTime;
-    private int difficultyLevel = 1;
+    public int difficultyLevel = 1;
 
     public ZombieSpawner(GamePanel gp) {
         this.gp = gp;
@@ -21,13 +21,13 @@ public class ZombieSpawner {
     }
 
     public void update() {
-        // Update difficulty every minute
-        long elapsedMinutes = (TimeUtils.millis() - gameStartTime) / 60000;
+        // Update difficulty every 30 seconds
+        long elapsedMinutes = (TimeUtils.millis() - gameStartTime) / 30000;
         if (elapsedMinutes + 1 > difficultyLevel) {
             difficultyLevel = (int)elapsedMinutes + 1;
             // Increase difficulty
-            spawnInterval = Math.max(1000, 3000 - (difficultyLevel * 200)); // Spawn faster
-            maxZombies = Math.min(50, 20 + (difficultyLevel * 2)); // More zombies allowed
+            spawnInterval = Math.max(1000, 3000 - (difficultyLevel * 300)); // Spawn faster
+            maxZombies = Math.min(50, 20 + (difficultyLevel * 5)); // More zombies allowed
         }
 
         // Check if it's time to spawn and we haven't hit the zombie limit

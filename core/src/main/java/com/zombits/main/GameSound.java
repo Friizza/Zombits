@@ -11,6 +11,7 @@ public class GameSound {
     Sound walk = Gdx.audio.newSound(Gdx.files.internal("Sound/walking.wav"));
     Sound shoot = Gdx.audio.newSound(Gdx.files.internal("Sound/shoot.wav"));
     public Sound zombieGroan = Gdx.audio.newSound(Gdx.files.internal("Sound/zombie_groan.wav"));
+    public Sound receiveDamage = Gdx.audio.newSound(Gdx.files.internal("Sound/receive_damage.wav"));
 //    Music music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
 
     public GameSound(GamePanel gp) {
@@ -28,5 +29,7 @@ public class GameSound {
     public void dispose() {
         walk.dispose();
         shoot.dispose();
+        zombieGroan.dispose();
+        receiveDamage.dispose();
     }
 }
