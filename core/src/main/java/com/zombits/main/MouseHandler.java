@@ -8,6 +8,10 @@ public class MouseHandler extends InputAdapter {
 
     GamePanel gp;
 
+    public boolean isShooting = false;
+
+    public float mouseX, mouseY;
+
     public MouseHandler(GamePanel gp) {
         this.gp = gp;
     }
@@ -27,10 +31,14 @@ public class MouseHandler extends InputAdapter {
         return true;
     }
 
+    public void updateMouse() {
+    }
+
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT && gp.gameState == gp.playState) {
-            gp.gameSound.playSE(gp.gameSound.shoot);
+            isShooting = true;
+//            gp.gameSound.playSE(gp.gameSound.shoot);
 
             // Calculate mouse world position
             float mouseWorldX = gp.camera.position.x - gp.screenWidth/2 +
@@ -38,8 +46,31 @@ public class MouseHandler extends InputAdapter {
             float mouseWorldY = gp.camera.position.y - gp.screenHeight/2 +
                 (Gdx.graphics.getHeight() - screenY) * (float)gp.screenHeight / Gdx.graphics.getHeight();
 
+            mouseX = mouseWorldX;
+            mouseY = mouseWorldY;
+
             // Create and add bullet
-            gp.createBullet(gp.player.worldX, gp.player.worldY, mouseWorldX, mouseWorldY);
+//            gp.createBullet(gp.player.worldX, gp.player.worldY, mouseWorldX, mouseWorldY);
+//            gp.shoot(gp.player.worldX, gp.player.worldY, mouseWorldX, mouseWorldY);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.LEFT) {
+            isShooting = false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        if (isShooting) {
+            mouseX = gp.camera.position.x - gp.screenWidth/2 +
+                screenX * (float)gp.screenWidth / Gdx.graphics.getWidth();
+            mouseY = gp.camera.position.y - gp.screenHeight/2 +
+                (Gdx.graphics.getHeight() - screenY) * (float)gp.screenHeight / Gdx.graphics.getHeight();
         }
         return true;
     }

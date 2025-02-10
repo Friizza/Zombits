@@ -2,6 +2,7 @@ package com.zombits.main;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.ScreenUtils;
 
 public class UI {
 
@@ -9,11 +10,17 @@ public class UI {
     SpriteBatch batch;
     Texture logo;
 
-    public UI(GamePanel gp, SpriteBatch batch) {
+    public UI(GamePanel gp) {
         this.gp = gp;
     }
 
-    public void drawMenu() {
+    public void drawUI() {
+        ScreenUtils.clear(0f, 0f, 0f, 1f);
+        batch.begin();
+
+        
+
+        batch.end();
     }
 
     public void dispose() {

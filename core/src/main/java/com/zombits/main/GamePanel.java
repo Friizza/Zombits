@@ -46,8 +46,8 @@ public class GamePanel extends ApplicationAdapter {
     MouseHandler mouseH = new MouseHandler(this);
     public CollisionChecker cChecker = new CollisionChecker(this);
     Crosshair crosshair = new Crosshair(this);
-    UI ui = new UI(this, batch);
-    GameSound gameSound;
+    UI ui = new UI(this);
+    public GameSound gameSound;
     ZombieSpawner zombieSpawner;
     CoordinateUtility coorUtil;
 
@@ -155,8 +155,11 @@ public class GamePanel extends ApplicationAdapter {
 
         // GAME STATE
         if(gameState == playState) {
+            float deltaTime = Gdx.graphics.getDeltaTime();
+
             updateCrosshair();
             updatePlayerSprite();
+            player.update(deltaTime);
             updateZombies();
             updateBullets();
 
@@ -164,6 +167,11 @@ public class GamePanel extends ApplicationAdapter {
             camera.position.set(player.worldX, player.worldY, 0);
             camera.update();
         }
+
+        // DEBUG
+//        System.out.println(player.currentGun.getName());
+//        System.out.println(player.health);
+//        System.out.println("Player X: " + player.worldX + " Player Y: " + player.worldY);
 
     }
     public void updatePlayerSprite() {
@@ -252,11 +260,6 @@ public class GamePanel extends ApplicationAdapter {
             if (!zombies.get(i).isAlive) {
                 Zombie zombie = zombies.remove(i);
                 zombie.dispose();
-            } else {
-                int playSound = random.nextInt(700);
-                if(playSound == 0) {
-                    gameSound.playSE(gameSound.zombieGroan);
-                }
             }
         }
     }
@@ -314,7 +317,7 @@ public class GamePanel extends ApplicationAdapter {
                 );
             }
 
-            // Draw Player
+            // Player
             switch(player.spriteDirection) {
                 case "left":
                     batch.draw(player.left, player.worldX, player.worldY, tileSize, tileSize);
@@ -324,7 +327,7 @@ public class GamePanel extends ApplicationAdapter {
                     break;
             }
 
-            // Draw Zombies
+            // Zombies
             for (Zombie zombie : zombies) {
                 if (zombie.isAlive) {
                     if (zombie.direction.equals("left")) {
@@ -335,7 +338,7 @@ public class GamePanel extends ApplicationAdapter {
                 }
             }
 
-            // Draw Crosshair
+            // Crosshair
             batch.draw(crosshair.image, crosshair.x, crosshair.y, originalTileSize * 3, originalTileSize * 3);
 
             batch.end();
@@ -343,8 +346,11 @@ public class GamePanel extends ApplicationAdapter {
             /// DRAW UI ///
             batch.setProjectionMatrix(uiCamera.combined);
             batch.begin();
+
+            // Score
             String scoreString = "Score: " + this.score;
             uiFont.draw(batch, scoreString, 20, Gdx.graphics.getHeight() - 20);
+
             batch.end();
         }
         else if (gameState == inventoryState) {
@@ -395,6 +401,11 @@ public class GamePanel extends ApplicationAdapter {
     }
 
     //// HELPER METHODS ////
+    // Player
+    public void shoot(float startX, float startY, float targetX, float targetY) {
+        createBullet(startX, startY, targetX, targetY);
+        gameSound.playSE(gameSound.shoot);
+    }
 
     // Bullets
     public void createBullet(float startX, float startY, float targetX, float targetY) {

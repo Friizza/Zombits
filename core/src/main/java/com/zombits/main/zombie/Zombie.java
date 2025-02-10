@@ -4,9 +4,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.zombits.main.GamePanel;
 
 import java.awt.Rectangle;
+import java.util.Random;
 
 public class Zombie {
     GamePanel gp;
+
+    Random random = new Random();
 
     public float worldX, worldY;
     public float speed = 1f;
@@ -24,6 +27,8 @@ public class Zombie {
     public int maxHealth = 100;
     public int currentHealth = maxHealth;
     public boolean isAlive = true;
+
+    public int attack = 1;
 
     public Zombie(GamePanel gp, float x, float y) {
         this.gp = gp;
@@ -55,6 +60,11 @@ public class Zombie {
     public void update() {
         if (!isAlive) return;
 
+        int playSound = random.nextInt(700);
+        if(playSound == 0) {
+            gp.gameSound.playSE(gp.gameSound.zombieGroan);
+        }
+
         // Calculate direction to player
         float dx = gp.player.worldX - worldX;
         float dy = gp.player.worldY - worldY;
@@ -72,12 +82,17 @@ public class Zombie {
                 direction = "right";
             }
 
-            // Check collisions before moving
-            if (!gp.cChecker.checkTileCollision(worldX + moveX, worldY)) {
-                worldX += moveX;
-            }
-            if (!gp.cChecker.checkTileCollision(worldX, worldY + moveY)) {
-                worldY += moveY;
+            // Check player collision
+            if(!checkPlayerCollision()) {
+                // Check collisions before moving
+                if (!gp.cChecker.checkTileCollision(worldX + moveX, worldY)) {
+                    worldX += moveX;
+                }
+                if (!gp.cChecker.checkTileCollision(worldX, worldY + moveY)) {
+                    worldY += moveY;
+                }
+            } else {
+                gp.player.takeDamage(attack);
             }
         }
 
@@ -134,6 +149,10 @@ public class Zombie {
         );
 
         return zombieArea.intersects(playerArea);
+    }
+
+    public void damagePlayer() {
+        gp.player.health -= attack;
     }
 
     public void dispose() {

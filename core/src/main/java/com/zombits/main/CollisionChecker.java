@@ -28,7 +28,17 @@ public class CollisionChecker {
                 if (cell != null && cell.getTile().getProperties().containsKey("collision")) {
                     return true;
                 }
+                if(checkOutOfBounds(x, y)) {
+                    return true;
+                }
             }
+        }
+        return false;
+    }
+
+    boolean checkOutOfBounds(float x, float y) {
+        if(x < 0 || x > 39 * gp.tileSize || y < 0 || y > 39 * gp.tileSize) {
+            return true;
         }
         return false;
     }

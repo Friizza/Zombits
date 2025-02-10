@@ -22,6 +22,12 @@ public class KeyHandler extends Input.Keys {
             float nextX = gp.player.worldX;
             float nextY = gp.player.worldY;
 
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
+                gp.player.currentGun = gp.player.rifle;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) {
+                gp.player.currentGun = gp.player.pistol;
+            }
             if(Gdx.input.isKeyPressed(Input.Keys.W)) {
                 upPressed = true;
                 gp.player.direction = "up";
