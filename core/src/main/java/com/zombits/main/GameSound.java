@@ -12,6 +12,8 @@ public class GameSound {
     Sound shoot = Gdx.audio.newSound(Gdx.files.internal("Sound/shoot.wav"));
     public Sound zombieGroan = Gdx.audio.newSound(Gdx.files.internal("Sound/zombie_groan.wav"));
     public Sound receiveDamage = Gdx.audio.newSound(Gdx.files.internal("Sound/receive_damage.wav"));
+    public Sound noAmmo = Gdx.audio.newSound(Gdx.files.internal("Sound/no_ammo.wav"));
+    public Sound reload = Gdx.audio.newSound(Gdx.files.internal("Sound/reload_gun.wav"));
 //    Music music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
 
     public GameSound(GamePanel gp) {
@@ -19,7 +21,7 @@ public class GameSound {
     }
 
     public void playSE(Sound sound) {
-        sound.play(1.0f);
+        sound.play(0.5f);
     }
 
     public void playMusic() {
@@ -31,5 +33,7 @@ public class GameSound {
         shoot.dispose();
         zombieGroan.dispose();
         receiveDamage.dispose();
+        noAmmo.dispose();
+        reload.dispose();
     }
 }

@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -30,6 +31,7 @@ public class GamePanel extends ApplicationAdapter {
     OrthogonalTiledMapRenderer renderer;
     OrthographicCamera camera;
     OrthographicCamera uiCamera;
+    ShapeRenderer sRenderer;
 
     // Menu Font
     FreeTypeFontGenerator menuGenerator;
@@ -50,6 +52,7 @@ public class GamePanel extends ApplicationAdapter {
     public GameSound gameSound;
     public ZombieSpawner zombieSpawner;
     CoordinateUtility coorUtil;
+    public Data data = new Data(this);
 
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
     public Texture bulletTexture;
@@ -68,15 +71,15 @@ public class GamePanel extends ApplicationAdapter {
     public int gameState = 0;
     public final int menuState = 0;
     public final int playState = 1;
-    public final int inventoryState = 2;
-    public final int pauseState = 3;
-    public final int gameOverState = 4;
+    public final int pauseState = 2;
+    public final int gameOverState = 3;
 
     public int score = 0;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
+        sRenderer = new ShapeRenderer();
 
         // Initialize GameSound
         gameSound = new GameSound(this);
@@ -144,6 +147,8 @@ public class GamePanel extends ApplicationAdapter {
         player.gunPistol = new Texture("Gun/pistol.png");
         player.gunRifle = new Texture("Gun/rifle.png");
 
+        // Load UI Textures
+        ui.uiBackground = new Texture("Ui/ui_background.png");
     }
 
     @Override
@@ -163,6 +168,7 @@ public class GamePanel extends ApplicationAdapter {
 
             updateCrosshair();
             updatePlayerSprite();
+            checkGameOver();
             player.update(deltaTime);
             updateZombies();
             updateBullets();
@@ -178,6 +184,13 @@ public class GamePanel extends ApplicationAdapter {
 //        System.out.println("Player X: " + player.worldX + " Player Y: " + player.worldY);
 
     }
+    void checkGameOver() {
+        if(player.health <= 0) {
+            gameState = gameOverState;
+            data.saveHighScore(score);
+        }
+    }
+
     public void updatePlayerSprite() {
         player.spriteCounter++;
         if(keyH.downPressed || keyH.upPressed || keyH.leftPressed || keyH.rightPressed) {
@@ -389,18 +402,43 @@ public class GamePanel extends ApplicationAdapter {
             String diffLevel = "Difficulty: " + zombieSpawner.difficultyLevel;
             uiFont.draw(batch, diffLevel, 20, Gdx.graphics.getHeight() - 60);
 
+            // Draw UI Background
+            batch.draw(ui.uiBackground, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+            String ammo = "Ammo: " + player.currentGun.ammo + " / " + player.currentGun.reserveAmmo;
+            String hp = "HP: " + player.health;
+
+            uiFont.draw(batch, ammo, 30, 50);
+            uiFont.draw(batch, hp, 30, 95);
+
             batch.end();
-        }
-        else if (gameState == inventoryState) {
-            // Draw Inventory
+
+            // Draw black box over not selected gun
+            sRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            sRenderer.setColor(new com.badlogic.gdx.graphics.Color(0 / 255f, 0 / 255f, 0 / 255f, 0.7f));
+            if(player.currentGun.getName().equals("Rifle")) {
+                sRenderer.rect(361 * scale, 4 * scale, 27 * scale, 17 * scale);
+            } else {
+                sRenderer.rect(331 * scale, 4 * scale, 25 * scale, 17 * scale);
+            }
+            sRenderer.end();
         }
         else if (gameState == pauseState) {
-            // Draw Pause Menu
+            sRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            sRenderer.setColor(new com.badlogic.gdx.graphics.Color(0 / 255f, 0 / 255f, 0 / 255f, 1f));
+            sRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            sRenderer.end();
+
+            batch.begin();
+            menuFont.draw(batch, "PAUSED", coorUtil.getCenteredMenuTextX("PAUSED"), coorUtil.getCenteredMenuTextY("PAUSED"));
+            uiFont.draw(batch, "Press ESC to Resume", coorUtil.getCenteredUiTextX("Press ESC to Resume"), coorUtil.getCenteredUiTextY("Press ESC to Resume") / 2);
+            batch.end();
         }
         else if (gameState == menuState) {
             batch.begin();
 
             String pressEnter = "Press Enter to Start";
+            String highScore = "High Score: " + data.loadHighScore();
 
             // Draw Logo
             batch.draw(ui.logo, coorUtil.getCenteredImageX(300*4),
@@ -408,6 +446,11 @@ public class GamePanel extends ApplicationAdapter {
 
             // Draw Press Enter to Start
             menuFont.draw(batch, pressEnter, coorUtil.getCenteredMenuTextX(pressEnter), coorUtil.getCenteredMenuTextY(pressEnter) - coorUtil.getCenteredMenuTextY(pressEnter) / 2);
+            // Draw High Score
+            uiFont.draw(batch, highScore, coorUtil.getCenteredUiTextX(highScore), coorUtil.getCenteredUiTextY(highScore) - coorUtil.getCenteredMenuTextY(highScore) / 3);
+
+            String coontrols = "WASD to move - Left Click to shoot - 1 & 2 to switch guns - R to reload - ESC to pause";
+            uiFont.draw(batch, coontrols, coorUtil.getCenteredUiTextX(coontrols), Gdx.graphics.getHeight() - 50);
 
             batch.end();
         }
@@ -441,16 +484,20 @@ public class GamePanel extends ApplicationAdapter {
     //// HELPER METHODS ////
     // Player
     public void shoot(float startX, float startY, float targetX, float targetY) {
-        createBullet(startX, startY, targetX, targetY);
-        gameSound.playSE(gameSound.shoot);
+        if(!keyH.isReloading) {
+            if(player.currentGun.ammo > 0) {
+                Bullet bullet = new Bullet(this, startX + tileSize / 2, startY, targetX, targetY);
+                bullet.texture = bulletTexture;
+                bullets.add(bullet);
+                player.currentGun.ammo--;
+                gameSound.playSE(gameSound.shoot);
+            } else if(player.currentGun.ammo == 0) {
+                gameSound.playSE(gameSound.noAmmo);
+            }
+        }
     }
 
     // Bullets
-    public void createBullet(float startX, float startY, float targetX, float targetY) {
-        Bullet bullet = new Bullet(this, startX + tileSize/2, startY, targetX, targetY);
-        bullet.texture = bulletTexture;
-        bullets.add(bullet);
-    }
     private boolean isOutOfBounds(Bullet bullet) {
         return bullet.x < 0 || bullet.x > map.getProperties().get("width", Integer.class) * tileSize ||
             bullet.y < 0 || bullet.y > map.getProperties().get("height", Integer.class) * tileSize;

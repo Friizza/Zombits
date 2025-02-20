@@ -3,12 +3,16 @@ package com.zombits.main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class KeyHandler extends Input.Keys {
 
     GamePanel gp;
 
     private long lastWalkSoundTime = 0;
     private static final long WALK_SOUND_INTERVAL = 260;
+    public boolean isReloading = false;
 
     public boolean leftPressed, rightPressed, upPressed, downPressed;
 
@@ -74,12 +78,51 @@ public class KeyHandler extends Input.Keys {
             } else {
                 rightPressed = false;
             }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                if(gp.player.currentGun.ammo < gp.player.currentGun.magazineSize) {
+                    if(gp.player.currentGun.reserveAmmo >= gp.player.currentGun.magazineSize) {
+                        gp.player.currentGun.reserveAmmo -= (gp.player.currentGun.magazineSize - gp.player.currentGun.ammo);
+                        gp.player.currentGun.ammo = gp.player.currentGun.magazineSize;
+                        gp.gameSound.playSE(gp.gameSound.reload);
+                        reloadTimer();
+                    } else if(gp.player.currentGun.reserveAmmo > 0) {
+                        reloadTimer();
+                        while(gp.player.currentGun.reserveAmmo > 0) {
+                            gp.player.currentGun.reserveAmmo--;
+                            gp.player.currentGun.ammo++;
+                            if(gp.player.currentGun.ammo == gp.player.currentGun.magazineSize) {
+                                break;
+                            }
+                        }
+                        gp.gameSound.playSE(gp.gameSound.reload);
+                    }
+                }
+            }
+            if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                gp.gameState = gp.pauseState;
+            }
         }
         else if(gp.gameState == gp.menuState) {
             if(Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
                 gp.gameState = gp.playState;
             }
         }
+        else if(gp.gameState == gp.pauseState) {
+            if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                gp.gameState = gp.playState;
+            }
+        }
+    }
+
+    private void reloadTimer() {
+        isReloading = true;
+
+        com.badlogic.gdx.utils.Timer.schedule(new com.badlogic.gdx.utils.Timer.Task() {
+            @Override
+            public void run() {
+                isReloading = false;
+            }
+        }, 1.5f); // 1.5 seconds reload
     }
 
     private void playWalkSound() {

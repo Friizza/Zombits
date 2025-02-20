@@ -7,8 +7,9 @@ import com.badlogic.gdx.utils.ScreenUtils;
 public class UI {
 
     GamePanel gp;
-    SpriteBatch batch;
+//    SpriteBatch batch;
     Texture logo;
+    Texture uiBackground;
 
     public UI(GamePanel gp) {
         this.gp = gp;
@@ -16,14 +17,13 @@ public class UI {
 
     public void drawUI() {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
-        batch.begin();
-
-        
-
-        batch.end();
+//        batch.begin();
+//
+//        batch.end();
     }
 
     public void dispose() {
         logo.dispose();
+        uiBackground.dispose();
     }
 }

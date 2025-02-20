@@ -8,7 +8,7 @@ public class Player {
 
     GamePanel gp;
 
-    public int maxHealth = 100;
+    public int maxHealth = 5;
     public int health = maxHealth;
     public int speed = 1;
 
@@ -45,8 +45,8 @@ public class Player {
         solidArea.height = 27;
 
         // Initialize guns
-        rifle = new Gun("Rifle", 30, 0.1f, true);  // 0.1s between shots (automatic)
-        pistol = new Gun("Pistol", 25, 0.5f, false); // 0.5s between shots (semi-automatic)
+        rifle = new Gun("Rifle", 30, 0.1f, true, 30, 300);  // 0.1s between shots (automatic)
+        pistol = new Gun("Pistol", 25, 0.5f, false, 15, 150); // 0.5s between shots (semi-automatic)
         currentGun = pistol;
     }
 
