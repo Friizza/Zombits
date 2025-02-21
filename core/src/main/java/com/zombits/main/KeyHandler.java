@@ -105,11 +105,17 @@ public class KeyHandler extends Input.Keys {
         else if(gp.gameState == gp.menuState) {
             if(Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
                 gp.gameState = gp.playState;
+                gp.refillManager.startSpawning();
             }
         }
         else if(gp.gameState == gp.pauseState) {
             if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 gp.gameState = gp.playState;
+            }
+        }
+        else if(gp.gameState == gp.gameOverState) {
+            if(Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+                gp.gameState = gp.menuState;
             }
         }
     }

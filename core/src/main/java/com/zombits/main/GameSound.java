@@ -14,6 +14,7 @@ public class GameSound {
     public Sound receiveDamage = Gdx.audio.newSound(Gdx.files.internal("Sound/receive_damage.wav"));
     public Sound noAmmo = Gdx.audio.newSound(Gdx.files.internal("Sound/no_ammo.wav"));
     public Sound reload = Gdx.audio.newSound(Gdx.files.internal("Sound/reload_gun.wav"));
+    public Sound ammoPickup = Gdx.audio.newSound(Gdx.files.internal("Sound/ammo_pickup.wav"));
 //    Music music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
 
     public GameSound(GamePanel gp) {
@@ -35,5 +36,6 @@ public class GameSound {
         receiveDamage.dispose();
         noAmmo.dispose();
         reload.dispose();
+        ammoPickup.dispose();
     }
 }

@@ -2,12 +2,12 @@
 
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
 
-This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
+A simple 2D retro-style zombie survival game.
+This project was created to learn the basics of libGDX while working on my main project, *Spellbound RPG*. It is not a polished release, and there are no plans for future updates.
 
-## Platforms
-
-- `core`: Main module with the application logic shared by all platforms.
-- `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
+Sprites are from [WuzzyWizard](https://wuzzywizard.itch.io/).
+Monogram font is from [datagoblin](https://datagoblin.itch.io/).
+Sound effects are from [PixaBay](https://pixabay.com/) and [Freesound.org](https://freesound.org/).
 
 ## Gradle
 

@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 
 public class Gun {
     private String name;
-    private int damage;
+    public int damage;
     public float fireRate;
     private boolean isAutomatic;
     public float lastShotTime;

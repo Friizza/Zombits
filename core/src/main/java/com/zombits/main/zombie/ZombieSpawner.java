@@ -28,6 +28,9 @@ public class ZombieSpawner {
             // Increase difficulty
             spawnInterval = Math.max(1000, 3000 - (difficultyLevel * 300)); // Spawn faster
             maxZombies = Math.min(50, 20 + (difficultyLevel * 5)); // More zombies allowed
+            // Increase damage value of weapons
+            gp.player.pistol.damage += 5;
+            gp.player.rifle.damage += 5;
         }
 
         // Check if it's time to spawn and we haven't hit the zombie limit

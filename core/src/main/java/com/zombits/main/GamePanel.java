@@ -53,6 +53,7 @@ public class GamePanel extends ApplicationAdapter {
     public ZombieSpawner zombieSpawner;
     CoordinateUtility coorUtil;
     public Data data = new Data(this);
+    public BulletRefillManager refillManager;
 
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
     public Texture bulletTexture;
@@ -112,6 +113,9 @@ public class GamePanel extends ApplicationAdapter {
         zombieSpawner.setSpawnRadius(10);      // Spawn 10 tiles away from player
         zombieSpawner.setMaxZombies(30);       // Allow up to 30 zombies
 
+        // Initialize bullet refill
+        refillManager = new BulletRefillManager(this);
+
         // SET INPUT PROCESSOR
         Gdx.input.setInputProcessor(mouseH);
 
@@ -146,6 +150,7 @@ public class GamePanel extends ApplicationAdapter {
         // Load gun textures
         player.gunPistol = new Texture("Gun/pistol.png");
         player.gunRifle = new Texture("Gun/rifle.png");
+        refillManager.refillTexture = new Texture("Gun/ammo_box.png");
 
         // Load UI Textures
         ui.uiBackground = new Texture("Ui/ui_background.png");
@@ -172,10 +177,13 @@ public class GamePanel extends ApplicationAdapter {
             player.update(deltaTime);
             updateZombies();
             updateBullets();
+            refillManager.update();
 
             // UPDATE CAMERA
             camera.position.set(player.worldX, player.worldY, 0);
             camera.update();
+
+            System.out.println(player.worldX + " " + player.worldY);
         }
 
         // DEBUG
@@ -299,20 +307,22 @@ public class GamePanel extends ApplicationAdapter {
 
         if(gameState == playState) {
             /// DRAW GAME ///
-            // Map
+            // Set the view for the renderer
             renderer.setView(camera.combined,
                 camera.position.x - screenWidth/2 - tileSize * 5,
                 camera.position.y - screenHeight/2 - tileSize * 5,
                 screenWidth + tileSize * 10,
                 screenHeight + tileSize * 10
             );
-            renderer.render();
 
+            // Draw first two layers (background and street/grass)
+            int[] baseLayers = {0, 1};
+            renderer.render(baseLayers);
 
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
 
-            // Draw Bullets Accounting for rotation
+            // Draw Bullets
             for (Bullet bullet : bullets) {
                 batch.draw(
                     bullet.texture,           // texture
@@ -333,51 +343,127 @@ public class GamePanel extends ApplicationAdapter {
                     false                    // flip y
                 );
             }
+            batch.end();
 
-            // Player
-            if(player.isDamaged) {
-                batch.setColor(1, 0, 0, 1);
+            TiledMapTileLayer structureLayer = (TiledMapTileLayer) map.getLayers().get(2);
+
+            // For each tile in the structure layer, check if player should be in front or behind
+            int mapWidth = structureLayer.getWidth();
+            int mapHeight = structureLayer.getHeight();
+
+            int startX = Math.max(0, (int)((camera.position.x - screenWidth/2 - tileSize * 5) / tileSize));
+            int endX = Math.min(mapWidth, (int)((camera.position.x + screenWidth/2 + tileSize * 5) / tileSize) + 1);
+            int startY = Math.max(0, (int)((camera.position.y - screenHeight/2 - tileSize * 5) / tileSize));
+            int endY = Math.min(mapHeight, (int)((camera.position.y + screenHeight/2 + tileSize * 5) / tileSize) + 1);
+
+            // Structures that should be drawn before player
+            TiledMap foregroundMap = new TiledMap();
+            TiledMapTileLayer foregroundLayer = new TiledMapTileLayer(mapWidth, mapHeight,
+                (int)structureLayer.getTileWidth(), (int)structureLayer.getTileHeight());
+            foregroundMap.getLayers().add(foregroundLayer);
+
+            // Structures that should be drawn after player
+            TiledMap backgroundMap = new TiledMap();
+            TiledMapTileLayer backgroundLayer = new TiledMapTileLayer(mapWidth, mapHeight,
+                (int)structureLayer.getTileWidth(), (int)structureLayer.getTileHeight());
+            backgroundMap.getLayers().add(backgroundLayer);
+
+            for (int x = startX; x < endX; x++) {
+                for (int y = startY; y < endY; y++) {
+                    TiledMapTileLayer.Cell cell = structureLayer.getCell(x, y);
+                    if (cell != null) {
+                        float tileWorldY = y * tileSize;
+                        float tileBottom = tileWorldY + tileSize;
+
+                        if (player.worldY + tileSize > tileBottom) {
+                            foregroundLayer.setCell(x, y, cell);
+                        } else {
+                            backgroundLayer.setCell(x, y, cell);
+                        }
+                    }
+                }
             }
-            switch(player.spriteDirection) {
-                case "left":
-                    batch.draw(player.left, player.worldX, player.worldY, tileSize, tileSize);
-                    break;
-                case "right":
-                    batch.draw(player.right, player.worldX, player.worldY, tileSize, tileSize);
-                    break;
-            }
-            batch.setColor(1, 1, 1, 1);
 
-            // Gun
-            float gunAngle = (float)Math.toDegrees(Math.atan2(
-                crosshair.y - player.worldY,
-                crosshair.x - player.worldX
-            ));
+            OrthogonalTiledMapRenderer backgroundRenderer = new OrthogonalTiledMapRenderer(backgroundMap, scale);
+            OrthogonalTiledMapRenderer foregroundRenderer = new OrthogonalTiledMapRenderer(foregroundMap, scale);
 
-            boolean flipTexture = crosshair.x < player.worldX; // Flip texture if the gun is pointing left
+            backgroundRenderer.setView(camera.combined,
+                camera.position.x - screenWidth/2 - tileSize * 5,
+                camera.position.y - screenHeight/2 - tileSize * 5,
+                screenWidth + tileSize * 10,
+                screenHeight + tileSize * 10);
+            foregroundRenderer.setView(camera.combined,
+                camera.position.x - screenWidth/2 - tileSize * 5,
+                camera.position.y - screenHeight/2 - tileSize * 5,
+                screenWidth + tileSize * 10,
+                screenHeight + tileSize * 10);
 
-            batch.draw(
-                player.currentGun == player.pistol ? player.gunPistol : player.gunRifle,
-                player.worldX + tileSize/4,
-                player.worldY - tileSize/4,
-                tileSize/2,
-                tileSize/2,
-                tileSize,
-                tileSize,
-                1,
-                1,
-                gunAngle,
-                0,
-                0,
-                player.currentGun == player.pistol ? player.gunPistol.getWidth() : player.gunRifle.getWidth(),
-                player.currentGun == player.pistol ? player.gunPistol.getHeight() : player.gunRifle.getHeight(),
-                false,
-                flipTexture
-            );
+            // Draw background structures first
+            backgroundRenderer.render();
 
-            // Zombies
+            // Draw player and zombies sorted by Y position
+            batch.begin();
+
+            ArrayList<Renderable> renderables = new ArrayList<>();
+
+            renderables.add(new Renderable(player.worldX, player.worldY + tileSize, "player"));
+
             for (Zombie zombie : zombies) {
                 if (zombie.isAlive) {
+                    renderables.add(new Renderable(zombie.worldX, zombie.worldY + tileSize, "zombie", zombies.indexOf(zombie)));
+                }
+            }
+
+            refillManager.draw(batch);
+
+            renderables.sort((r1, r2) -> Float.compare(r2.y, r1.y));
+
+            // Draw entities in sorted order
+            for (Renderable renderable : renderables) {
+                if (renderable.type.equals("player")) {
+                    // Draw player
+                    if(player.isDamaged) {
+                        batch.setColor(1, 0, 0, 1);
+                    }
+                    switch(player.spriteDirection) {
+                        case "left":
+                            batch.draw(player.left, player.worldX, player.worldY, tileSize, tileSize);
+                            break;
+                        case "right":
+                            batch.draw(player.right, player.worldX, player.worldY, tileSize, tileSize);
+                            break;
+                    }
+                    batch.setColor(1, 1, 1, 1);
+
+                    // Draw Gun
+                    float gunAngle = (float)Math.toDegrees(Math.atan2(
+                        crosshair.y - player.worldY,
+                        crosshair.x - player.worldX
+                    ));
+
+                    boolean flipTexture = crosshair.x < player.worldX;
+
+                    batch.draw(
+                        player.currentGun == player.pistol ? player.gunPistol : player.gunRifle,
+                        player.worldX + tileSize/4,
+                        player.worldY - tileSize/4,
+                        tileSize/2,
+                        tileSize/2,
+                        tileSize,
+                        tileSize,
+                        1,
+                        1,
+                        gunAngle,
+                        0,
+                        0,
+                        player.currentGun == player.pistol ? player.gunPistol.getWidth() : player.gunRifle.getWidth(),
+                        player.currentGun == player.pistol ? player.gunPistol.getHeight() : player.gunRifle.getHeight(),
+                        false,
+                        flipTexture
+                    );
+                } else if (renderable.type.equals("zombie")) {
+                    // Draw zombie
+                    Zombie zombie = zombies.get(renderable.index);
                     if (zombie.direction.equals("left")) {
                         batch.draw(zombie.left, zombie.worldX, zombie.worldY, tileSize, tileSize);
                     } else {
@@ -386,10 +472,17 @@ public class GamePanel extends ApplicationAdapter {
                 }
             }
 
-            // Crosshair
-            batch.draw(crosshair.image, crosshair.x, crosshair.y, originalTileSize * 3, originalTileSize * 3);
-
+            // draw foreground structures
             batch.end();
+            foregroundRenderer.render();
+
+            // Draw crosshair
+            batch.begin();
+            batch.draw(crosshair.image, crosshair.x, crosshair.y, originalTileSize * 3, originalTileSize * 3);
+            batch.end();
+
+            backgroundRenderer.dispose();
+            foregroundRenderer.dispose();
 
             /// DRAW UI ///
             batch.setProjectionMatrix(uiCamera.combined);
@@ -430,7 +523,7 @@ public class GamePanel extends ApplicationAdapter {
             sRenderer.end();
 
             batch.begin();
-            menuFont.draw(batch, "PAUSED", coorUtil.getCenteredMenuTextX("PAUSED"), coorUtil.getCenteredMenuTextY("PAUSED"));
+            menuFont.draw(batch, "GAME PAUSED", coorUtil.getCenteredMenuTextX("GAME PAUSED"), coorUtil.getCenteredMenuTextY("GAME PAUSED"));
             uiFont.draw(batch, "Press ESC to Resume", coorUtil.getCenteredUiTextX("Press ESC to Resume"), coorUtil.getCenteredUiTextY("Press ESC to Resume") / 2);
             batch.end();
         }
@@ -438,7 +531,7 @@ public class GamePanel extends ApplicationAdapter {
             batch.begin();
 
             String pressEnter = "Press Enter to Start";
-            String highScore = "High Score: " + data.loadHighScore();
+            String highScore = "Highest Score: " + data.loadHighScore();
 
             // Draw Logo
             batch.draw(ui.logo, coorUtil.getCenteredImageX(300*4),
@@ -455,7 +548,18 @@ public class GamePanel extends ApplicationAdapter {
             batch.end();
         }
         else if (gameState == gameOverState) {
-            // Draw Game Over Screen
+            sRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            sRenderer.setColor(new com.badlogic.gdx.graphics.Color(0 / 255f, 0 / 255f, 0 / 255f, 1f));
+            sRenderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            sRenderer.end();
+
+            batch.begin();
+            menuFont.draw(batch, "GAME OVER", coorUtil.getCenteredMenuTextX("GAME OVER"), coorUtil.getCenteredMenuTextY("GAME OVER"));
+            String finalScore = "Score: " + score;
+            menuFont.draw(batch, finalScore, coorUtil.getCenteredMenuTextX(finalScore), coorUtil.getCenteredMenuTextY(finalScore) / 2);
+            String pressEnter = "Press Enter to go back to main menu";
+            uiFont.draw(batch, pressEnter, coorUtil.getCenteredUiTextX(pressEnter), coorUtil.getCenteredUiTextY(pressEnter) / 2 - 100);
+            batch.end();
         }
     }
 
@@ -479,6 +583,7 @@ public class GamePanel extends ApplicationAdapter {
         gameSound.dispose();
         menuGenerator.dispose();
         uiGenerator.dispose();
+        refillManager.dispose();
     }
 
     //// HELPER METHODS ////
