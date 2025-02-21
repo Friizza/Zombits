@@ -24,4 +24,5 @@ Sound effects are from [PixaBay](https://pixabay.com/) and [Freesound.org](https
 This project uses [Gradle](https://gradle.org/) to manage dependencies.
 The Gradle wrapper was included, so you can run Gradle tasks using `gradlew.bat` or `./gradlew` commands.  
   
-Run `/gradle build` to build the project, you will find the jar file in `/lwjgl3/build/libs`
+Run `/gradlew build` to build the project, you will find the jar file in `/lwjgl3/build/libs`.  
+In case it doesn't work try `.\/gradlew build`.
