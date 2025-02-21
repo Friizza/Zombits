@@ -3,11 +3,19 @@
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
 
 A simple 2D retro-style zombie survival game.
-This project was created to learn the basics of libGDX while working on my main project, *Spellbound RPG*. It is not a polished release, and there are no plans for future updates.
+This project was created to learn the basics of libGDX while working on my main project, *Spellbound RPG*, therefore it is not a polished release, and there are no plans for future updates.
 
-Sprites are from [WuzzyWizard](https://wuzzywizard.itch.io/).
-Monogram font is from [datagoblin](https://datagoblin.itch.io/).
-Sound effects are from [PixaBay](https://pixabay.com/) and [Freesound.org](https://freesound.org/).
+Sprites are from [WuzzyWizard](https://wuzzywizard.itch.io/).  
+Monogram font is from [datagoblin](https://datagoblin.itch.io/).  
+Sound effects are from [PixaBay](https://pixabay.com/) and [Freesound.org](https://freesound.org/).  
+
+## Controls
+
+WASD to move.  
+Left Click to shoot.  
+1 & 2 to switch weapons.  
+R to reload.  
+ESC to pause.  
 
 ## Gradle
 

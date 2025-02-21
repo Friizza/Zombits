@@ -57,6 +57,7 @@ public class GamePanel extends ApplicationAdapter {
 
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
     public Texture bulletTexture;
+    public Texture reloadIndicator;
 
     public ArrayList<Zombie> zombies = new ArrayList<>();
 
@@ -151,6 +152,7 @@ public class GamePanel extends ApplicationAdapter {
         player.gunPistol = new Texture("Gun/pistol.png");
         player.gunRifle = new Texture("Gun/rifle.png");
         refillManager.refillTexture = new Texture("Gun/ammo_box.png");
+        reloadIndicator = new Texture("Ui/reload.png");
 
         // Load UI Textures
         ui.uiBackground = new Texture("Ui/ui_background.png");
@@ -325,22 +327,22 @@ public class GamePanel extends ApplicationAdapter {
             // Draw Bullets
             for (Bullet bullet : bullets) {
                 batch.draw(
-                    bullet.texture,           // texture
-                    bullet.x,                 // x position
-                    bullet.y,                 // y position
-                    tileSize/4,              // origin x (half of width)
-                    tileSize/4,              // origin y (half of height)
-                    tileSize/2,              // width
-                    tileSize/2,              // height
-                    1,                       // scale x
-                    1,                       // scale y
-                    bullet.rotation,         // rotation (degrees)
-                    0,                       // src x
-                    0,                       // src y
-                    bullet.texture.getWidth(),  // src width
-                    bullet.texture.getHeight(), // src height
-                    false,                   // flip x
-                    false                    // flip y
+                    bullet.texture,
+                    bullet.x,
+                    bullet.y,
+                    tileSize/4,
+                    tileSize/4,
+                    tileSize/2,
+                    tileSize/2,
+                    1,
+                    1,
+                    bullet.rotation,
+                    0,
+                    0,
+                    bullet.texture.getWidth(),
+                    bullet.texture.getHeight(),
+                    false,
+                    false
                 );
             }
             batch.end();
@@ -461,6 +463,8 @@ public class GamePanel extends ApplicationAdapter {
                         false,
                         flipTexture
                     );
+
+                    drawReloadIndicator(batch);
                 } else if (renderable.type.equals("zombie")) {
                     // Draw zombie
                     Zombie zombie = zombies.get(renderable.index);
@@ -584,6 +588,7 @@ public class GamePanel extends ApplicationAdapter {
         menuGenerator.dispose();
         uiGenerator.dispose();
         refillManager.dispose();
+        reloadIndicator.dispose();
     }
 
     //// HELPER METHODS ////
@@ -632,5 +637,36 @@ public class GamePanel extends ApplicationAdapter {
         }
 
         return false;
+    }
+
+    // Reload
+    private void drawReloadIndicator(SpriteBatch batch) {
+        if (keyH.isReloading) {
+            float rotation = (System.currentTimeMillis() % 1500) / 1500f * 360f;
+
+            // Position slightly above player
+            float indicatorX = player.worldX + (tileSize/2) - (tileSize/4);
+            float indicatorY = player.worldY + tileSize + (tileSize/4);
+
+            // Draw rotating indicator
+            batch.draw(
+                reloadIndicator,
+                indicatorX,
+                indicatorY,
+                tileSize/4,
+                tileSize/4,
+                tileSize/2,
+                tileSize/2,
+                1,
+                1,
+                rotation,
+                0,
+                0,
+                reloadIndicator.getWidth(),
+                reloadIndicator.getHeight(),
+                false,
+                false
+            );
+        }
     }
 }
