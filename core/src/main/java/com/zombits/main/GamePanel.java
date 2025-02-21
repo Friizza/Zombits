@@ -510,15 +510,15 @@ public class GamePanel extends ApplicationAdapter {
 
             batch.end();
 
-            // Draw black box over not selected gun
-            sRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            sRenderer.setColor(new com.badlogic.gdx.graphics.Color(0 / 255f, 0 / 255f, 0 / 255f, 0.7f));
-            if(player.currentGun.getName().equals("Rifle")) {
-                sRenderer.rect(361 * scale, 4 * scale, 27 * scale, 17 * scale);
-            } else {
-                sRenderer.rect(331 * scale, 4 * scale, 25 * scale, 17 * scale);
-            }
-            sRenderer.end();
+//            // Draw black box over not selected gun
+//            sRenderer.begin(ShapeRenderer.ShapeType.Filled);
+//            sRenderer.setColor(new com.badlogic.gdx.graphics.Color(0 / 255f, 0 / 255f, 0 / 255f, 0.7f));
+//            if(player.currentGun.getName().equals("Rifle")) {
+//                sRenderer.rect(361 * scale, 4 * scale, 27 * scale, 17 * scale);
+//            } else {
+//                sRenderer.rect(331 * scale, 4 * scale, 25 * scale, 17 * scale);
+//            }
+//            sRenderer.end();
         }
         else if (gameState == pauseState) {
             sRenderer.begin(ShapeRenderer.ShapeType.Filled);
